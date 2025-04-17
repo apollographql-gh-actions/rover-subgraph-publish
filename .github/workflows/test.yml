@@ -1,0 +1,43 @@
+name: Test rover actions
+on:
+  push:
+    branches:
+      - '*'
+    paths-ignore:
+      - .github/workflows/release.yml
+      - README.md
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - .github/workflows/release.yml
+      - README.md
+  workflow_dispatch:
+
+jobs:
+  subgraph-publish:
+    name: Run Rover subgraph check command
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install rover
+        uses: apollographql-gh-actions/install-rover@v1
+        with:
+          version: 0.28.1
+      - name: Generate test schema file
+        run: |
+          echo -e "type Query {\n  hello: String!\n}" > ./schema.graphql
+        shell: bash
+      - name: Run schema publish
+        uses: ./
+        with:
+          apollo-key: ${{ secrets.APOLLO_KEY }}
+          graph-ref: ${{ vars.APOLLO_GRAPH_REF }}
+          name: test-rover-actions
+          schema: ./schema.graphql
+  
